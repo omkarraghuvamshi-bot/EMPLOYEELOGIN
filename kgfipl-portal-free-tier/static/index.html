@@ -22,64 +22,68 @@ main{max-width:1150px;margin:auto;padding:18px 14px 50px}.grid{display:grid;grid
 .pn{background:var(--c);border:1px solid var(--b);border-radius:14px;padding:16px;margin-top:16px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.row>*{flex:1;min-width:130px}
 .tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:7px;border-bottom:1px solid var(--b);white-space:nowrap}td img{width:36px;height:36px;border-radius:6px;object-fit:cover;vertical-align:middle}
 video{width:100%;max-width:300px;border-radius:12px;background:#000}.hero{height:150px;border-radius:14px;background-size:cover;background-position:center;display:flex;align-items:flex-end;padding:14px;color:#fff;font-size:21px;font-weight:700;text-shadow:0 2px 6px #000}a{color:var(--p)}
-#landing{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(120deg,rgba(5,24,45,.55),rgba(4,17,32,.78)),url(/static/img/office-lobby.jpg) center/cover no-repeat}.landing-card{width:min(680px,100%);padding:clamp(28px,6vw,58px);border-radius:24px;background:rgba(255,255,255,.95);box-shadow:0 24px 70px rgba(0,0,0,.28);text-align:center;color:#14202e}.landing-brand{font-size:13px;letter-spacing:.16em;font-weight:800;color:#43627c}.landing-card h1{font-size:clamp(32px,6vw,54px);line-height:1.04;margin:12px 0;color:#0a3d6e}.landing-card p{color:#5d6b7c;line-height:1.6;margin:0 auto 24px;max-width:480px}.landing-card .btn{padding:15px 28px;font-size:17px;border-radius:12px}.segments-wrap{max-width:1200px;margin:auto;padding:32px 18px 54px}.segments-wrap h1{color:#fff;text-shadow:0 2px 8px #000;margin:0 0 8px}.segments-wrap .lede{margin:0 0 22px}.segment-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}.segment-tile{background:var(--c);border:1px solid var(--b);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .16s,box-shadow .16s}.segment-tile:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.2)}.segment-tile .im{height:145px;background-size:cover;background-position:center}.segment-tile .t{padding:14px;font-weight:700}.segment-tile small{display:block;color:var(--m);font-weight:400;margin-top:5px}.status-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 11px;font-weight:800;font-size:12px;letter-spacing:.04em}.status-pill.present{background:#dcfce7;color:#166534}.status-pill.absent{background:#fee2e2;color:#991b1b}.status-dot{width:8px;height:8px;border-radius:50%;background:currentColor}.today-status{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px 16px;border:1px solid var(--b);border-radius:12px;background:var(--c);margin:12px 0 16px}.today-status strong{font-size:18px}.backline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.sg .d{display:block;color:var(--m);font-weight:400;font-size:13px;margin-top:3px;line-height:1.35}
+.pbtn{flex:1;min-width:120px;padding:18px 10px;font-size:19px;font-weight:700;color:#fff;border:0;border-radius:12px;cursor:pointer}.pbtn:disabled{opacity:.5}.pres{background:#1e9e4e}.abs{background:#d03a2c}
+.lb .go{margin:0}
 </style></head><body><div id="app"></div><script>
-let T=null,U=null,SG=[],seg=null,stream=null,pos=null;
+let SG=[],stream=null;
 const $=i=>document.getElementById(i),A=$('app'),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),today=()=>new Date().toLocaleDateString('en-CA');
-async function api(p,b){const r=await fetch(p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',...(T?{Authorization:'Bearer '+T}:{})},body:b?JSON.stringify(b):undefined});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error '+r.status);return j}
-let chosenSeg=null,staffMode=false;
-function landingPage(){
- A.innerHTML=`<div id="landing"><div class="landing-card"><div class="landing-brand">K G F I P L</div><h1>Employee Attendance Portal</h1><p>Access your business segment, sign in with your employee credentials and record attendance securely.</p><button class="btn" onclick="loadSegments()">Employee login</button></div></div>`;
-}
-async function loadSegments(){try{SG=await api('/api/segments');segmentsPage()}catch(e){landingPage();alert('Could not load business segments. '+e.message)}}
-function segmentsPage(){
- A.innerHTML=`<div class="shell lobby"><main class="segments-wrap"><div class="backline"><div><h1>Choose your business segment</h1><p class="lede">Select the segment where your employee account is registered.</p></div><button class="btn alt" style="background:#fff" onclick="landingPage()">Back to home</button></div><div class="segment-grid">${SG.map(s=>`<div class="segment-tile" onclick="employeeLoginPage(${s[0]})"><div class="im" style="background-image:${img(s)}"></div><div class="t">${s[0]}. ${esc(s[1])}<small>Employee sign-in</small></div></div>`).join('')}</div></main></div>`;
-}
-function employeeLoginPage(id){
- chosenSeg=Number(id);staffMode=false;const s=SG.find(x=>Number(x[0])===chosenSeg);if(!s)return segmentsPage();
- A.innerHTML=`<div id="lg"><div class="lb"><div class="brand">KGFIPL INTERNAL PORTAL · SEGMENT ${s[0]}</div><h1 class="elogin">Employee Login</h1><p class="sub">${esc(s[1])}</p><label>Employee ID</label><input id="c" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="Enter your employee ID"><label>Full name</label><input id="n" autocomplete="name" placeholder="Enter your registered name"><label>Password</label><input id="p" type="password" autocomplete="current-password"><div class="er" id="e"></div><button class="btn" style="width:100%" onclick="login(false)">Sign in</button><button class="btn alt" style="width:100%;margin-top:9px" onclick="segmentsPage()">Back to segments</button><p class="sub" style="margin:14px 0 0">Use the credentials issued to you by your segment HR.</p></div></div>`;
- $('c').onkeydown=$('n').onkeydown=$('p').onkeydown=e=>{if(e.key==='Enter')login(false)};
-}
-function staffLoginPage(){staffMode=true;chosenSeg=null;A.innerHTML=`<div id="lg"><div class="lb"><div class="brand">KGFIPL INTERNAL PORTAL</div><h1>Staff / Admin Login</h1><p class="sub">HR, Accounts and Managing Director access</p><label>Username</label><input id="c" autocomplete="username" autocapitalize="characters" placeholder="e.g. HR1"><label>Name</label><input id="n" autocomplete="name" placeholder="Enter your registered name"><label>Password</label><input id="p" type="password" autocomplete="current-password"><div class="er" id="e"></div><button class="btn" style="width:100%" onclick="login(true)">Sign in</button><button class="btn alt" style="width:100%;margin-top:9px" onclick="landingPage()">Back to home</button></div></div>`;$('c').onkeydown=$('n').onkeydown=$('p').onkeydown=e=>{if(e.key==='Enter')login(true)}}
-async function login(isStaff=false){$('e').textContent='';try{const payload={username:$('c').value,name:$('n').value,password:$('p').value};if(!isStaff)payload.segment=chosenSeg;const r=await api('/api/login',payload);T=r.token;U=r.user;SG=r.segments||SG;seg=(U.role==='emp'||U.role==='accounts')?Number(U.seg):null;if(U.must_reset)changePasswordPage(true);else home()}catch(x){$('e').textContent=x.message}}
-function changePasswordPage(first=false){const current=first?'':`<label>Current password</label><input id="oldpw" type="password" autocomplete="current-password">`;A.innerHTML=`<div id="lg"><div class="lb"><h1>${first?'Set your personal password':'Change password'}</h1><p style="color:var(--m);line-height:1.5">${first?'Your temporary staff password has been accepted. Set a private password before continuing.':'Choose a new password for your staff account.'}</p>${current}<label>New password</label><input id="newpw" type="password" autocomplete="new-password"><label>Confirm new password</label><input id="confirmpw" type="password" autocomplete="new-password"><div class="er" id="pwe"></div><button class="btn" style="width:100%" onclick="savePassword(${first})">${first?'Set password and continue':'Save new password'}</button>${first?'':'<button class="btn alt" style="width:100%;margin-top:8px" onclick="home()">Cancel</button>'}</div></div>`;$('confirmpw').onkeydown=e=>{if(e.key==='Enter')savePassword(first)}}
-async function savePassword(first){const a=$('newpw').value,b=$('confirmpw').value;if(a.length<10)return $('pwe').textContent='Use at least 10 characters.';if(a!==b)return $('pwe').textContent='The new passwords do not match.';try{await api('/api/password/change',{current_password:first?'':$('oldpw')?.value||'',new_password:a});U.must_reset=false;home()}catch(e){$('pwe').textContent=e.message}}
-async function logout(){stop();try{await api('/api/logout',{})}catch(e){}T=U=null;seg=null;chosenSeg=null;landingPage()}
-const img=s=>`url(/static/img/${s[2]}.jpg)`,can=s=>U.role=='accounts'?s[0]==U.seg:true;
-function home(){let h=`<div class="shell ${seg==null?'lobby':'exec'}"><header><div><b>KGFIPL</b> &nbsp;${esc(U.name)}</div><div>${U.role!='emp'?'<button class="btn" onclick="seg=null;stop();home()">Segments</button><button class="btn" onclick="changePasswordPage(false)">Change password</button>':''} <button class="btn" onclick="logout()">Logout</button></div></header><main>`;
- if(seg==null){h+=`<h2>Business segments</h2><p class="lede">Open a segment to manage employees and attendance.</p><div class="grid">${SG.map(s=>`<div class="sg ${can(s)?'':'off'}" ${can(s)?`onclick="seg=${s[0]};home()"`:''}><div class="im" style="background-image:${img(s)}"></div><div class="t">${s[0]}. ${esc(s[1])}</div></div>`).join('')}</div>`+(U.role=='hr'||U.role=='md'?rep(null):'')}
- else{const s=SG.find(x=>x[0]==seg);h+=`<div class="hero" style="background-image:linear-gradient(transparent 30%,rgba(0,0,0,.7)),${img(s)}">${s[0]}. ${esc(s[1])}</div><div id="b"></div>`}
- A.innerHTML=h+'</main></div>';if(seg==null){if(U.role!='emp')sent()}else U.role=='emp'?emp():staff()}
-// ---- reports (HR / MD / Accounts)
-function rep(s){return `<div class="pn"><h3 style="margin-top:0">Reports ${s?'':'– all segments'}</h3><div class="row"><div><label>From</label><input type="date" id="f${s||0}" value="${today()}"></div><div><label>To</label><input type="date" id="t${s||0}" value="${today()}"></div>
-<div><button class="btn" onclick="show(${s||0})">Show</button></div><div><button class="btn alt" onclick="xl(${s||0})">Download Excel</button></div></div>
-${U.role=='hr'?`<div class="row"><div style="flex:3"><input id="n${s||0}" placeholder="Note to MD (optional)"></div><div><button class="btn" onclick="toMD(${s||0})">Send report to MD</button></div></div>`:''}
-<div class="er" id="m${s||0}"></div><div class="tw" id="r${s||0}"></div></div>${s?'':'<div class="pn" id="sent"></div>'}`}
-const qs=s=>`from=${$('f'+s).value}&to=${$('t'+s).value}${s?'&seg='+s:''}`;
-async function show(s){try{const R=await api('/api/report?'+qs(s));$('r'+s).innerHTML=`<table><tr><th>Date</th><th>Segment</th><th>Dept</th><th>Code</th><th>Name</th><th>Phone</th><th>Login</th><th>Logout</th><th>Attendance in</th><th>Attendance out</th><th>Status</th></tr>`+R.slice(0,600).map(r=>`<tr><td>${r.date}</td><td>${r.seg}</td><td>${r.dept}</td><td>${r.ecode}</td><td>${esc(r.name)}</td><td>${r.phone||'–'}</td><td>${r.login||'–'}</td><td>${r.logout||(r.login?'Still in':'–')}</td><td>${cl(r.pin,r.tin,r.mapin)}</td><td>${cl(r.pout,r.tout,r.mapout)}</td><td class="${r.status=='Present'?'ok':'bad'}">${r.status}</td></tr>`).join('')+'</table>'+(R.length>600?'<p>Showing first 600 rows – download Excel for all.</p>':'')}catch(x){$('m'+s).textContent=x.message}}
-const cl=(i,t,m)=>i?`<a href="/photo/${i}.jpg?t=${T}" target="_blank"><img src="/photo/${i}.jpg?t=${T}"></a> ${t} <a href="${m}" target="_blank" rel="noopener">map</a>`:'–';
-function xl(s){location.href='/api/export.xlsx?'+qs(s)+'&t='+T}
-async function toMD(s){try{await api('/api/reports',{from:$('f'+s).value,to:$('t'+s).value,seg:s||'',note:$('n'+s).value});$('m'+s).innerHTML='<span class="ok">Report sent to MD</span>';if(!s)sent()}catch(x){$('m'+s).textContent=x.message}}
-async function sent(){try{const R=await api('/api/reports');if(!$('sent'))return;$('sent').innerHTML=`<h3 style="margin-top:0">${U.role=='md'?'Reports received from HR':'Reports sent to MD'}</h3><div class="tw"><table><tr><th>Sent</th><th>By</th><th>Period</th><th>Segment</th><th>Note</th><th></th></tr>`+(R.map(r=>`<tr><td>${r.at}</td><td>${esc(r.by)}</td><td>${r.dfrom} to ${r.dto}</td><td>${r.seg}</td><td>${esc(r.note)}</td><td><a href="/api/reports/${r.id}.xlsx?t=${T}">Excel</a></td></tr>`).join('')||'<tr><td colspan="6">None yet</td></tr>')+'</table></div>'}catch(e){}}
-// ---- HR / accounts segment page
-async function staff(){const s=SG.find(x=>x[0]==seg),add=U.role=='hr'&&U.grp==s[3];
- $('b').innerHTML=(U.role==='accounts'?'<div id="myatt"></div>':'')+(add?`<div class="pn"><h3 style="margin-top:0">Add employee</h3><div class="row"><div><label>Name</label><input id="nn"></div><div><label>Phone (optional)</label><input id="np" type="tel"></div><div><label>Department</label><select id="nd"><option>Operations</option><option>Accounts</option></select></div><div><label>Employee ID (optional)</label><input id="ne" placeholder="auto 001, 002…"></div><div><label>Password (optional)</label><input id="npw" placeholder="auto-generated"></div><div><button class="btn" onclick="addE()">Add</button></div></div><div class="er" id="ae"></div></div>`:'')+rep(seg)+`<div class="pn"><h3 style="margin-top:0">Employees</h3><div class="tw" id="el"></div></div>`;
- const E=await api('/api/employees?seg='+seg);$('el').innerHTML='<table><tr><th>Employee ID</th><th>Name</th><th>Phone</th><th>Department</th></tr>'+(E.map(e=>`<tr><td>${e.ecode}</td><td>${esc(e.name)}</td><td>${e.phone||'–'}</td><td>${e.dept}</td></tr>`).join('')||'<tr><td colspan="4">No employees yet</td></tr>')+'</table>';show(seg);if(U.role==='accounts')await emp('myatt')}
-async function addE(){try{const r=await api('/api/employees',{seg,name:$('nn').value,phone:$('np').value,dept:$('nd').value,ecode:$('ne').value,password:$('npw').value});await staff();$('ae').innerHTML='<span class="ok">Added. Employee ID: <b>'+esc(r.ecode)+'</b> · Password: <b>'+esc(r.password)+'</b> (share it now, it is not shown again)</span>'}catch(x){$('ae').textContent=x.message}}
-// ---- employee attendance
-async function emp(target='b'){
- const H=await api('/api/me/history?seg='+seg),t=H.find(r=>r.date===today())||{},nx=!t.tin?'in':!t.tout?'out':null,present=!!t.tin;
- const status=`<span class="status-pill ${present?'present':'absent'}"><span class="status-dot"></span>${present?'PRESENT':'ABSENT'}</span>`;
- $(target).innerHTML=`<div class="pn"><h3 style="margin-top:0">${U.role==='accounts'?'My attendance':'Attendance'} · ${esc(SG.find(x=>x[0]==seg)[1])} · ${today()}</h3><div class="today-status"><div><div style="color:var(--m);font-size:13px">Today's attendance status</div><strong>${status}</strong><div style="color:var(--m);font-size:13px;margin-top:5px">Check-in: ${t.tin||'Not marked'} &nbsp; · &nbsp; Check-out: ${t.tout||'Not marked'}</div></div><div style="color:var(--m);font-size:13px">Employee: <b>${esc(U.name)}</b> (${esc(U.ecode)})</div></div><div class="row" style="align-items:start"><div style="flex:0 0 auto"><video id="v" autoplay playsinline muted></video></div><div>
- ${nx?`<label>Your employee ID</label><input id="ac" autocapitalize="characters" placeholder="${esc(U.ecode)}" style="max-width:200px"><div class="er" id="gs">Location: not captured</div><button class="btn alt" onclick="start()">1. Verify ID &amp; turn on location &amp; camera</button><br><br><button class="btn" id="sn" disabled onclick="snap()">2. Click photo &amp; mark check-${nx}</button><div class="er" id="ms"></div>`:'<div class="ok">Attendance check-in and check-out are complete for today.</div>'}</div></div></div>
- <div class="pn"><h3 style="margin-top:0">My attendance · last 14 days</h3><div class="tw"><table><tr><th>Date</th><th>Check-in</th><th>Check-out</th><th>Status</th></tr>${H.slice().reverse().map(r=>`<tr><td>${r.date}</td><td>${cl(r.pin,r.tin,r.mapin)}</td><td>${cl(r.pout,r.tout,r.mapout)}</td><td>${r.status==='Present'?'<span class="status-pill present">PRESENT</span>':'<span class="status-pill absent">ABSENT</span>'}</td></tr>`).join('')}</table></div></div>`;
-}
-function start(){const a=$('ac').value.trim().toUpperCase();if(!a||a!==String(U.ecode).toUpperCase())return $('ms').innerHTML='<span class="bad">Wrong employee ID</span>';$('ms').textContent='';pos=null;
- navigator.geolocation?.getCurrentPosition(p=>{pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)};$('gs').innerHTML='<span class="ok">Location OK (±'+pos.acc+' m)</span>';rdy()},()=>$('gs').innerHTML='<span class="bad">Location blocked – allow location to mark attendance</span>',{enableHighAccuracy:true,timeout:20000});
- navigator.mediaDevices?.getUserMedia({video:{facingMode:'user'}}).then(s=>{stream=s;$('v').srcObject=s;rdy()}).catch(()=>$('ms').innerHTML='<span class="bad">Camera blocked – allow camera access</span>')}
-const rdy=()=>{if(pos&&stream)$('sn').disabled=false};
-async function snap(){const v=$('v'),w=320,h=Math.round(w*(v.videoHeight||240)/(v.videoWidth||320)),c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(v,0,0,w,h);x.fillStyle='rgba(0,0,0,.55)';x.fillRect(0,h-18,w,18);x.fillStyle='#fff';x.font='11px sans-serif';x.fillText(U.ecode+' '+new Date().toLocaleString()+' '+pos.lat.toFixed(4)+','+pos.lng.toFixed(4),4,h-5);
- $('sn').disabled=true;try{await api('/api/attendance',{ecode:$('ac').value.trim(),seg,lat:pos.lat,lng:pos.lng,acc:pos.acc,photo:c.toDataURL('image/jpeg',.6)});stop();emp(U.role==='accounts'?'myatt':'b')}catch(e){$('ms').innerHTML='<span class="bad">'+esc(e.message)+'</span>';$('sn').disabled=false}}
-function stop(){stream?.getTracks().forEach(t=>t.stop());stream=null}
-if(new URLSearchParams(location.search).get("staff")==="1")staffLoginPage();else landingPage();
+async function api(p,b){const r=await fetch(p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Error '+r.status);return j}
+const img=s=>`url(/static/img/${s[2]}.jpg)`;
+async function segs(){if(!SG.length)SG=await api('/api/segments');return SG}
+
+// ================= EMPLOYEE SIDE (no login) =================
+// 1) plain Employee Login page
+function startPage(){stopCam();A.innerHTML=`<div id="lg"><div class="lb"><button class="btn go" style="width:100%;font-size:20px;padding:16px" onclick="segmentsPage()">Employee Login</button></div></div>`}
+// 2) the 12 segments, each with a one-line description
+async function segmentsPage(){stopCam();try{await segs()}catch(e){return alert(e.message)}
+ A.innerHTML=`<div class="shell lobby"><header><div><b>KGFIPL</b> &nbsp;Employee attendance</div><div><button class="btn" onclick="startPage()">Home</button></div></header><main><h2>Business segments</h2><p class="lede">Open your segment to mark attendance with photo and location.</p><div class="grid">${SG.map(s=>`<div class="sg" onclick="segPage(${s[0]})"><div class="im" style="background-image:${img(s)}"></div><div class="t">${s[0]}. ${esc(s[1])}<span class="d">${esc(s[4])}</span></div></div>`).join('')}</div></main></div>`}
+// 3) inside one segment: login first, then Present / Leave
+let ME=null;
+async function segPage(n){stopCam();ME=null;await segs();const s=SG.find(x=>x[0]==n);
+ A.innerHTML=`<div class="shell exec"><header><div><b>KGFIPL</b> &nbsp;Employee attendance</div><div><button class="btn" onclick="segmentsPage()">Segments</button> <button class="btn" onclick="startPage()">Home</button></div></header><main>
+ <div class="hero" style="background-image:linear-gradient(transparent 30%,rgba(0,0,0,.7)),${img(s)}">${s[0]}. ${esc(s[1])}</div>
+ <div class="pn" id="box"><h3 style="margin-top:0">Login – ${esc(s[1])}</h3><div style="max-width:420px">
+  <label>Employee ID</label><input id="ac" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. KGF001">
+  <label>Name</label><input id="an" autocomplete="off" placeholder="Your full name">
+  <label>Password</label><input id="ap" type="password" autocomplete="off">
+  <button class="btn" id="bl" style="width:100%" onclick="segLogin(${n})">Login</button><div class="er" id="ms"></div></div></div></main></div>`;
+ $('ac').onkeydown=$('an').onkeydown=$('ap').onkeydown=e=>{if(e.key==='Enter')segLogin(n)}}
+async function segLogin(n){const ec=$('ac').value.trim(),nm=$('an').value.trim(),pw=$('ap').value;
+ if(!ec||!nm||!pw)return msg('Enter your Employee ID, Name and Password.','bad');
+ $('bl').disabled=true;
+ try{const r=await api('/api/check',{seg:n,ecode:ec,name:nm,password:pw});ME={seg:n,ecode:ec,name:nm,password:pw};attPage(r)}
+ catch(e){msg(esc(e.message),'bad');$('bl').disabled=false}}
+function attPage(r){const done=r.marked;
+ $('box').innerHTML=`<h3 style="margin-top:0">Welcome, ${esc(r.name)} <small style="color:var(--m);font-weight:400">(${esc(r.ecode)})</small></h3><div class="row" style="align-items:start"><div>
+  <p style="margin-top:0;color:var(--m)">Attendance for <b>${today()}</b></p>
+  ${done?`<div class="${done.status=='present'?'ok':'bad'}" style="font-size:17px;font-weight:600">Already marked ${done.status.toUpperCase()} today at ${done.time}</div>`
+  :`<div class="row"><button class="pbtn pres" id="bp" onclick="mark('present')">Present</button><button class="pbtn abs" id="ba" onclick="mark('leave')">Leave</button></div><p style="color:var(--m);font-size:13px">Press a button, tap <b>Allow</b> for location and camera, and your photo is taken automatically.</p>`}
+  <div class="er" id="ms"></div></div>
+  <div style="flex:0 0 auto"><video id="v" autoplay playsinline muted style="display:none"></video></div></div>`}
+const msg=(h,c)=>{const m=$('ms');if(m)m.innerHTML=c?`<span class="${c}">${h}</span>`:h};
+function stopCam(){stream?.getTracks().forEach(t=>t.stop());stream=null}
+const getPos=()=>new Promise((ok,no)=>{if(!navigator.geolocation)return no(new Error('Location is not supported on this device'));navigator.geolocation.getCurrentPosition(p=>ok({lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)}),()=>no(new Error('Location blocked – please allow location to mark attendance')),{enableHighAccuracy:true,timeout:20000,maximumAge:0})});
+const getCam=()=>{if(!navigator.mediaDevices?.getUserMedia)return Promise.reject(new Error('Camera is not available (open the portal over https)'));return navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}}).catch(()=>{throw new Error('Camera blocked – please allow camera access to mark attendance')})};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function mark(st){
+ if(!ME)return;const bs=[$('bp'),$('ba')];bs.forEach(b=>b.disabled=true);
+ try{
+  msg('Please tap <b>Allow</b> to share your location…');
+  const pos=await getPos();
+  msg('Location OK. Please tap <b>Allow</b> for the camera…');
+  stream=await getCam();
+  const v=$('v');v.style.display='block';v.srcObject=stream;await v.play().catch(()=>{});
+  msg('Taking your photo…');
+  for(let i=0;i<30&&!v.videoWidth;i++)await wait(100);await wait(1200);
+  const w=320,h=Math.round(w*(v.videoHeight||240)/(v.videoWidth||320)),c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(v,0,0,w,h);
+  x.fillStyle='rgba(0,0,0,.55)';x.fillRect(0,h-18,w,18);x.fillStyle='#fff';x.font='10px sans-serif';x.fillText(ME.ecode.toUpperCase()+' '+st.toUpperCase()+' '+new Date().toLocaleString()+' '+pos.lat.toFixed(4)+','+pos.lng.toFixed(4),4,h-5);
+  const photo=c.toDataURL('image/jpeg',.6);stopCam();v.srcObject=null;v.style.display='none';
+  msg('Saving…');
+  const r=await api('/api/attendance',{seg:ME.seg,ecode:ME.ecode,name:ME.name,password:ME.password,status:st,lat:pos.lat,lng:pos.lng,acc:pos.acc,photo});
+  bs.forEach(b=>b.remove());
+  msg(`✔ <b>${esc(r.name)}</b> marked <b>${r.status.toUpperCase()}</b> at ${r.time}. Photo and location saved.<br><img src="${photo}" style="width:120px;border-radius:8px;margin-top:8px">`,r.status=='present'?'ok':'bad');
+ }catch(e){stopCam();const v=$('v');if(v){v.srcObject=null;v.style.display='none'}msg(esc(e.message),'bad');bs.forEach(b=>{if(b)b.disabled=false})}}
+
+startPage();
 </script></body></html>

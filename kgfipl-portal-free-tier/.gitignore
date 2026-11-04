@@ -1,6 +1,5 @@
-# Runtime data and generated credentials
-kgfipl.db
-first_run_passwords.txt
+# Runtime data
+segments/
 uploads/
 __pycache__/
 *.py[cod]

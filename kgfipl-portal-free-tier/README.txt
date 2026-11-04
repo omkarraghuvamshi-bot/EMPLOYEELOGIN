@@ -1,70 +1,50 @@
-KGFIPL EMPLOYEE ATTENDANCE PORTAL - RENDER FREE / LOCAL PACKAGE
+KGFIPL INTERNAL PORTAL - RENDER FREE / LOCAL PACKAGE
+
+HOW EMPLOYEES USE IT
+  1. First page: one button "Employee Login".
+  2. Click it -> all 12 business segments.
+  3. Open a segment -> Login with Employee ID, Name and Password (that segment's employees only).
+  4. After login -> green "Present" and red "Leave" buttons.
+     Press one -> allow location -> allow camera -> photo is taken automatically ->
+     attendance saved (Present/Leave, time, GPS location, photo).
+     One mark per employee per day in each segment.
+
+DATABASE - ONE PER SEGMENT
+  segments/segment_01.db ... segments/segment_12.db  (created automatically on first start)
+  Each file has:  employees (Employee ID, Name, Password[hashed])  and  attendance (date, ID, status, time, lat, lng)
+  Photos are saved in uploads/ as seg01_<n>.jpg, seg02_<n>.jpg ...
+  An employee only works in the segment where he/she was added.
+
+DEMO EMPLOYEES (one per segment - change in server.py, DEMO list, before real use)
+  Seg  ID      Name          Password
+   1   KGF001  Ravi Kumar    Demo@001
+   2   KGF002  Priya Sharma  Demo@002
+   3   KGF003  Arjun Reddy   Demo@003
+   4   KGF004  Sneha Patil   Demo@004
+   5   KGF005  Imran Khan    Demo@005
+   6   KGF006  Anita Rao     Demo@006
+   7   KGF007  Vikram Singh  Demo@007
+   8   KGF008  Meena Iyer    Demo@008
+   9   KGF009  Suresh Naik   Demo@009
+  10   KGF010  Kavya Menon   Demo@010
+  11   KGF011  Rahul Das     Demo@011
+  12   KGF012  Divya Nair    Demo@012
+
+ADD MORE EMPLOYEES
+  python3 add_employee.py      (Windows: python add_employee.py)
+  It asks: segment number, Employee ID, Name, Password.
+
+SEE THE ATTENDANCE DATA
+  Open segments/segment_01.db ... segment_12.db with "DB Browser for SQLite" (free),
+  table "attendance". Photos are in the uploads/ folder (seg03_1.jpg = segment 3, record 1).
 
 RENDER WEB SERVICE SETTINGS
-  Service type: Web Service
-  Runtime: Python 3
-  Plan: Free
+  Service type: Web Service     Runtime: Python 3     Plan: Free
   Build Command: echo "No dependencies to install"
   Start Command: python server.py
   Environment variable: TZ_HOURS=5.5
-  Optional environment variable: INITIAL_STAFF_PASSWORD=KGFIPL@2026!
-  If you use a different INITIAL_STAFF_PASSWORD, set the same value before first startup.
   Do NOT set DATA_DIR on Render Free. Do NOT add a Persistent Disk.
-
-EMPLOYEE LOGIN FLOW
-  The public landing page has an Employee login button.
-  Clicking it opens the 12 business segments. Selecting a segment opens that segment's
-  employee login form (Employee ID, registered full name and password).
-  Employee accounts can only log in to the segment assigned to their employee record.
-  Segment cards no longer display the internal HR-1 / HR-2 routing labels. HR staff
-  permissions remain enforced internally.
-  After login, employees see their attendance screen for their assigned segment only.
-  Today's and historical attendance statuses are green for PRESENT and red for ABSENT.
-  Attendance still requires a camera photo and device location.
-
-DEMO EMPLOYEE CREDENTIALS
-  The bundled demo employees are created in Segment 12 (HR) on first startup:
-    KGF001  Ravi Kumar    YFyqpx#17AY
-    KGF002  Priya Sharma  8KR3Wj$26qE
-    KGF003  Arjun Reddy   GThYXd#21At
-    KGF004  Sneha Patil   B5Dkkq!609C
-    KGF005  Imran Khan    k2RD84#28G2
-  These are sample accounts. Change them before real use.
-  Segments 1-11 do not receive fake/demo employee records. HR must add each real employee
-  from the Staff / Admin login and issue the employee ID, registered name and password.
-
-STAFF / ADMIN ACCESS
-  Staff / Admin login is intentionally hidden from the public landing page. To access it,
-  open https://YOUR-RENDER-SERVICE.onrender.com/?staff=1 directly. Replace the domain with
-  your actual Render service URL.
-
-  All seeded staff accounts use the temporary password: KGFIPL@2026!
-  Staff must set a personal password after their first login.
-
-  Username  Registered name
-  HR1       HR - Segments 1 to 8 and 12
-  HR2       HR - Segments 9 to 11
-  MD        Managing Director
-  ACC01     Accounts - Construction, Mining & Wood Work
-  ACC02     Accounts - KGFIPL Renewable Energy
-  ACC03     Accounts - KGFIPL Manufacturing
-  ACC04     Accounts - KGFIPL Agriculture & Farming
-  ACC05     Accounts - KGFIPL Electrical & Electronic Equipment Manufacturing
-  ACC06     Accounts - KGFIPL Import & Export
-  ACC07     Accounts - KGFIPL Financial & Educational Services
-  ACC08     Accounts - KGFIPL Security Services & Manpower Supply
-  ACC09     Accounts - Hospitality
-  ACC10     Accounts - Adventures
-  ACC11     Accounts - Courier
-
-  HR can add employees to the segments assigned to that HR account. Accounts users and MD
-  retain their existing reports and Excel export functions.
-
-ACCOUNTS STAFF ATTENDANCE
-  ACC01 through ACC11 can now also record their own attendance in their assigned segment.
-  After Accounts login, the My Attendance panel appears at the top of the assigned segment page.
-  Accounts staff use their ACC username as the employee ID and must allow camera and location
-  access to complete check-in and check-out. Their attendance is included in segment reports.
+  NOTE: camera and location only work on https:// (Render gives https) or localhost.
 
 LOCAL RUN
   python3 server.py
