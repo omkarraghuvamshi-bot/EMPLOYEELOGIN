@@ -55,6 +55,13 @@ drop table attendance;alter table attendance_new rename to attendance;''')
         c.execute('update users set pw=?, force_reset=1',(ph(common),))
         c.execute("insert into app_meta(key,value) values('common_staff_password_v1','done')")
         print('Existing staff accounts have been reset to the temporary common password.',flush=True)
+    # Make each Accounts staff account a reportable attendance identity as well.
+    # Keep pw NULL so authentication continues to use the staff account in users.
+    for a in c.execute("select username,name,seg from users where role='accounts' and seg is not null").fetchall():
+        c.execute("insert or ignore into employees(ecode,name,phone,seg,dept,added,active,pw) values(?,?,NULL,?,'Accounts',?,1,NULL)",
+                  (a['username'],a['name'],int(a['seg']),now().date().isoformat()))
+        c.execute("update employees set name=?,seg=?,dept='Accounts',active=1,pw=NULL where ecode=?",
+                  (a['name'],int(a['seg']),a['username']))
     pending=c.execute('select username from users where force_reset=1 order by username').fetchall()
     if pending:
         print('\n========== TEMPORARY STAFF LOGIN ==========',flush=True)
@@ -128,18 +135,32 @@ class H(BaseHTTPRequestHandler):
             t=(s.headers.get('Authorization') or '')[7:] or q.get('t',[''])[0];U=TOK.get(t)
             if U and U['exp']<time.time():U=None
             c=db()
+            if p=='/api/segments' and m=='GET':
+                return s.out(200,SEGS)
             if p=='/api/login' and m=='POST':
                 uid=str(body.get('username','')).strip().upper();pw=str(body.get('password',''));k='l'+s.client_address[0]+uid
                 e=c.execute('select * from employees where upper(ecode)=? and active=1 and pw is not null',(uid,)).fetchone()
                 r=None if e else c.execute('select * from users where username=?',(uid,)).fetchone()
                 row=e or r
                 nm=lambda v:' '.join(str(v).lower().split())
-                if blocked(k) or not row or not chk(pw,row['pw']) or (e and nm(e['name'])!=nm(body.get('name',''))):
-                    F.setdefault(k,[]).append(time.time());return s.out(401,{'error':'Wrong employee ID, name or password'})
+                requested_seg=body.get('segment')
+                try: requested_seg=int(requested_seg) if requested_seg not in (None,'') else None
+                except (TypeError,ValueError): requested_seg=None
+                if blocked(k) or not row or not chk(pw,row['pw']) or (e and nm(e['name'])!=nm(body.get('name',''))) or (e and requested_seg!=int(e['seg'])):
+                    F.setdefault(k,[]).append(time.time())
+                    if e and requested_seg!=int(e['seg']):return s.out(401,{'error':'This employee account is not assigned to the selected segment'})
+                    return s.out(401,{'error':'Wrong employee ID, name or password'})
                 if e:
                     U=dict(role='emp',id=e['ecode'],name=e['name'],seg=e['seg'],ecode=e['ecode'])
                     c.execute('insert into sessions values(?,?,?,null) on conflict(date,ecode) do update set logout=null',(now().date().isoformat(),e['ecode'],now().strftime('%H:%M:%S')));c.commit()
-                else:U=dict(role=r['role'],id=r['username'],name=r['name'],grp=r['grp'],seg=r['seg'],must_reset=bool(r['force_reset']))
+                else:
+                    U=dict(role=r['role'],id=r['username'],name=r['name'],grp=r['grp'],seg=r['seg'],
+                           ecode=r['username'] if r['role']=='accounts' else None,
+                           must_reset=bool(r['force_reset']))
+                    if r['role']=='accounts':
+                        c.execute('insert into sessions values(?,?,?,null) on conflict(date,ecode) do update set logout=null',
+                                  (now().date().isoformat(),r['username'],now().strftime('%H:%M:%S')))
+                        c.commit()
             if p=='/api/login':
                 t=secrets.token_urlsafe(24);U['exp']=time.time()+43200;TOK[t]=U
                 return s.out(200,{'token':t,'user':{k:v for k,v in U.items() if k!='exp'},'segments':SEGS})
@@ -159,14 +180,18 @@ class H(BaseHTTPRequestHandler):
             if U.get('must_reset') and p!='/api/logout':
                 return s.out(403,{'error':'Please set your personal password before continuing','must_reset':True})
             if p=='/api/logout':
-                if R=='emp':c.execute('update sessions set logout=? where date=? and ecode=?',(now().strftime('%H:%M:%S'),today,U['ecode']));c.commit()
+                if R in ('emp','accounts'):c.execute('update sessions set logout=? where date=? and ecode=?',(now().strftime('%H:%M:%S'),today,U['ecode']));c.commit()
                 TOK.pop(t,None);return s.out(200,{})
-            if p=='/api/me/history' and R=='emp':
-                x=q.get('seg',[''])[0];return s.out(200,rows((now()-timedelta(14)).date().isoformat(),today,[int(x)] if x.isdigit() and int(x) in SN else list(SN),U['ecode']))
-            if p=='/api/attendance' and m=='POST' and R=='emp':
-                if z(body.get('ecode','')).upper()!=z(U['ecode']).upper():return s.out(400,{'error':'Wrong employee ID'})
-                sg=body.get('seg')
-                if sg not in SN:return s.out(400,{'error':'Open a business segment to mark attendance'})
+            if p=='/api/me/history' and R in ('emp','accounts'):
+                return s.out(200,rows((now()-timedelta(14)).date().isoformat(),today,[int(U['seg'])],U['ecode']))
+            if p=='/api/attendance' and m=='POST' and R in ('emp','accounts'):
+                entered=str(body.get('ecode','')).strip().upper()
+                expected=str(U['ecode']).upper()
+                if (entered!=expected if R=='accounts' else z(entered)!=z(expected)):
+                    return s.out(400,{'error':'Wrong employee ID'})
+                try:sg=int(body.get('seg',0))
+                except (TypeError,ValueError):sg=0
+                if sg not in SN or sg!=int(U['seg']):return s.out(400,{'error':'You can only mark attendance in your assigned segment'})
                 ph_=str(body.get('photo',''));lat,lng=body.get('lat'),body.get('lng')
                 if not ph_.startswith('data:image/jpeg;base64,') or len(ph_)>600000 or not isinstance(lat,(int,float)) or not isinstance(lng,(int,float)):return s.out(400,{'error':'Location and photo are required'})
                 have={r['kind'] for r in c.execute('select kind from attendance where date=? and ecode=? and seg=?',(today,U['ecode'],sg))}
